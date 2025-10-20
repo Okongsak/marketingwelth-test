@@ -30,9 +30,9 @@ export class AuthService {
       throw new UnauthorizedException('Username already taken');
     }
     const hashed = await bcrypt.hash(password, 10);
-    const user = await this.usersService.create({ 
-      username, 
-      password: hashed
+    const user = await this.usersService.create({
+      username,
+      password: hashed,
     });
     const { password: p, ...rest } = user as any;
     // eslint-disable-next-line @typescript-eslint/no-unsafe-return

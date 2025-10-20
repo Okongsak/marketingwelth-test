@@ -40,10 +40,7 @@ export class ArticlesService {
     };
   }
 
-  // findOne: ดึง article เดียวจาก id
   async findOne(id: string) {
-    // findOneBy: หา record ที่ตรงกับเงื่อนไข
-    // SELECT * FROM article WHERE id = ?
     const article = await this.repo.findOneBy({ id });
     if (!article) throw new NotFoundException('Article not found');
 
