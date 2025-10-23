@@ -2,60 +2,82 @@ import { useState, useEffect } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import api from "../api/api.jsx";
 
+// ArticleForm: Component สำหรับสร้าง/แก้ไข Article
+// ใช้ form เดียวกันทั้ง Create และ Edit โดยเช็คจาก id
 const ArticleForm = () => {
+  // ดึง id จาก URL parameter (ถ้ามี id = แก้ไข, ไม่มี id = สร้างใหม่)
   const { id } = useParams();
   
+  // สำหรับ navigate ไปหน้าอื่น
   const nav = useNavigate();
   
+  // State เก็บข้อมูล form
   const [title, setTitle] = useState("");
   const [content, setContent] = useState("");
   const [publishedAt, setPublishedAt] = useState("");
 
+  // ฟังก์ชันกลับไปหน้า index
   const handleBackIndex = () => {
     nav("/index");
   };
 
+  // ฟังก์ชันแปลง Date object เป็น format ที่ใช้กับ input datetime-local
+  // datetime-local ต้องการ format: YYYY-MM-DDTHH:mm
   const formatDateTimeLocal = (dateString) => {
+    if (!dateString) return ""; // ถ้าไม่มีวันที่ คืนค่าว่าง
     
-    const dt = new Date(dateString);
+    const dt = new Date(dateString); // แปลง string เป็น Date object
+    
+    // ฟังก์ชันเสริม: เติม 0 ข้างหน้าถ้าเป็นเลขหลักเดียว (1 → 01)
     const pad = (n) => n.toString().padStart(2, "0");
     
+    // สร้าง string format: 2024-03-15T14:30
     return `${dt.getFullYear()}-${pad(dt.getMonth() + 1)}-${pad(
       dt.getDate()
     )}T${pad(dt.getHours())}:${pad(dt.getMinutes())}`;
   };
 
+  // useEffect: ถ้ามี id แสดงว่าเป็นโหมดแก้ไข
+  // ให้ดึงข้อมูล article เดิมมาแสดงใน form
   useEffect(() => {
     if (id) {
       api
-        .get(`/articles/${id}`)
+        .get(`/articles/${id}`) // ดึงข้อมูล article ตาม id
         .then((response) => {
+          // เซ็ตข้อมูลลงใน form
           setTitle(response.data.title);
           setContent(response.data.content);
           setPublishedAt(formatDateTimeLocal(response.data.publishedAt));
         })
         .catch(console.error);
     }
-  }, [id]);
+  }, [id]); // ทำงานใหม่เมื่อ id เปลี่ยน
 
+  // ฟังก์ชันจัดการเมื่อกด submit form
   const handleSubmitCreate = async (event) => {
-    event.preventDefault();
+    event.preventDefault(); // ป้องกัน page refresh
     
+    // เตรียมข้อมูลที่จะส่งไป API
     const payload = {
       title,
       content,
+      // แปลง datetime-local เป็น ISO string สำหรับ API
+      // ถ้าไม่มีวันที่ ให้ส่ง undefined
       publishedAt: publishedAt
         ? new Date(publishedAt).toISOString()
         : undefined,
     };
 
     try {
+      // ถ้ามี id = แก้ไข (PUT)
+      // ถ้าไม่มี id = สร้างใหม่ (POST)
       if (id) {
-        await api.put(`/articles/${id}`, payload);
+        await api.put(`/articles/${id}`, payload); // อัพเดท
       } else {
-        await api.post("/articles", payload);
+        await api.post("/articles", payload); // สร้างใหม่
       }
       
+      // สำเร็จแล้วกลับไปหน้า index
       nav("/index");
     } catch (err) {
       console.error(err);
@@ -65,9 +87,11 @@ const ArticleForm = () => {
 
   return (
     <div className="create-article-container">
+      {/* แสดง title ตามโหมด: มี id = Edit, ไม่มี = Create */}
       <h2>{id ? "Edit" : "Create"} Article</h2>
       
       <form onSubmit={handleSubmitCreate}>
+        {/* Input Title */}
         <div className="form-group">
           <label>Title</label>
           <input
@@ -75,20 +99,22 @@ const ArticleForm = () => {
             type="text"
             value={title}
             onChange={(event) => setTitle(event.target.value)}
-            required
+            required // ต้องกรอก
           />
         </div>
 
+        {/* Input Published Date */}
         <div className="form-group">
           <label>Published At</label>
           <input
             className="form-input"
-            type="datetime-local"
+            type="datetime-local" // input สำหรับเลือกวันและเวลา
             value={publishedAt}
             onChange={(event) => setPublishedAt(event.target.value)}
           />
         </div>
 
+        {/* Textarea Content */}
         <div className="form-group">
           <label>Content</label>
           <textarea
@@ -96,10 +122,11 @@ const ArticleForm = () => {
             rows="10"
             value={content}
             onChange={(event) => setContent(event.target.value)}
-            required
+            required // ต้องกรอก
           />
         </div>
 
+        {/* ปุ่ม Save และ Cancel */}
         <div className="d-flex-end">
           <button className="btn-submit-create-article" type="submit">
             Save
