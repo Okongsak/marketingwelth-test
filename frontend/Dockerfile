@@ -1,11 +1,13 @@
-
 FROM node:20
+
 WORKDIR /app
+
 COPY package*.json ./
+
+# hot reload
 RUN npm install --legacy-peer-deps
 COPY . .
-RUN mkdir -p /app/node_modules && chown -R node:node /app
-USER node
+EXPOSE 5173
 CMD ["npm", "run", "dev", "--", "--host", "0.0.0.0"]
 
 #FROM nginx:stable-alpine
